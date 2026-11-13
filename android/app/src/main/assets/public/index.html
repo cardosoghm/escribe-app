@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#30523A">
+<title>Escribe – Tablero</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header id="top">
+  <div id="adultCorner" aria-label="Acceso adulto (mantener 3 segundos)"></div>
+  <div id="output" aria-live="polite"><span id="text"></span><span id="caret"></span></div>
+  <nav id="controls">
+    <button class="ctl" data-action="speak"><span class="ico">🔊</span><span class="lbl">Hablar</span></button>
+    <button class="ctl" data-action="space"><span class="ico">␣</span><span class="lbl">Espacio</span></button>
+    <button class="ctl" data-action="back"><span class="ico">⌫</span><span class="lbl">Borrar</span></button>
+    <button class="ctl hold" data-action="clear"><span class="ico">✖</span><span class="lbl">Borrar todo</span><span class="bar"></span></button>
+    <button class="ctl" data-action="toggle"><span class="ico" id="toggleIco">123</span><span class="lbl" id="toggleLbl">Números</span></button>
+  </nav>
+</header>
+
+<main id="board"></main>
+
+<!-- PIN -->
+<div id="pinOverlay" class="overlay hidden">
+  <div class="pinBox">
+    <p>PIN de adulto</p>
+    <div id="pinDots"><i></i><i></i><i></i><i></i></div>
+    <div id="pinPad"></div>
+    <button id="pinCancel" class="link">Cancelar</button>
+  </div>
+</div>
+
+<!-- Panel adulto -->
+<div id="adultOverlay" class="overlay hidden">
+  <div class="panel">
+    <div class="panelHead"><h2>Modo adulto</h2><button id="closeAdult" class="btn primary">Volver al tablero</button></div>
+
+    <section>
+      <h3>Pantalla</h3>
+      <label>Tamaño de letras del tablero <span id="vScale"></span><input type="range" id="sScale" min="60" max="160" step="5"></label>
+      <label>Tamaño del texto escrito <span id="vOutScale"></span><input type="range" id="sOutScale" min="60" max="200" step="10"></label>
+      <label class="row">Color de fondo <input type="color" id="sBg"></label>
+      <label class="row">Color de letras <input type="color" id="sFg"></label>
+      <label class="row"><input type="checkbox" id="sUpper"> Mostrar lo escrito en MAYÚSCULAS</label>
+      <label class="row"><input type="checkbox" id="sEnye"> Mostrar la Ñ (a la derecha de la O)</label>
+      <button id="resetColors" class="btn">Restaurar colores originales</button>
+    </section>
+
+    <section>
+      <h3>Toques</h3>
+      <label>Tiempo mínimo entre letras: <span id="vDebounce"></span> ms<input type="range" id="sDebounce" min="0" max="1500" step="50"></label>
+      <p class="hint">Evita letras repetidas por toques dobles. Subilo si aparecen letras de más.</p>
+      <label>Tiempo que hay que mantener el dedo: <span id="vHold"></span> ms<input type="range" id="sHold" min="0" max="1500" step="50"></label>
+      <p class="hint">0 = toque normal. Subilo si roza letras sin querer. La letra se marca al levantar el dedo.</p>
+      <label class="row"><input type="checkbox" id="sMulti"> Ignorar toques con más de un dedo (palma apoyada)</label>
+    </section>
+
+    <section>
+      <h3>Respuesta al tocar</h3>
+      <label class="row"><input type="checkbox" id="sSpeakLetter"> Decir cada letra en voz alta</label>
+      <label class="row"><input type="checkbox" id="sSpeakWord"> Decir la palabra al poner Espacio</label>
+      <label class="row"><input type="checkbox" id="sVibrate"> Vibrar al tocar</label>
+      <label class="row"><input type="checkbox" id="sFlash"> Resaltar la letra tocada</label>
+    </section>
+
+    <section>
+      <h3>Voz</h3>
+      <label class="row">Idioma
+        <select id="sLang"><option value="es-AR">Español (Argentina)</option><option value="es-ES">Español (España)</option><option value="es-MX">Español (México)</option><option value="es-US">Español (EE.UU.)</option></select>
+      </label>
+      <label>Velocidad <span id="vRate"></span><input type="range" id="sRate" min="0.5" max="1.5" step="0.1"></label>
+      <label>Tono <span id="vPitch"></span><input type="range" id="sPitch" min="0.5" max="1.8" step="0.1"></label>
+      <label>Hablar solo después de <span id="vAuto"></span> sin tocar<input type="range" id="sAuto" min="0" max="10" step="1"></label>
+      <p class="hint">0 = apagado (solo habla con el botón «Hablar»). Por ejemplo, con 3 segundos: termina de escribir, espera 3 segundos y la app dice la frase sola.</p>
+      <button id="testVoice" class="btn">Probar voz</button>
+      <p class="hint">Para que la voz funcione sin internet: Ajustes de Android → Accesibilidad → Salida de texto a voz → descargar el idioma Español.</p>
+    </section>
+
+    <section>
+      <h3>Bloqueo</h3>
+      <label class="row"><input type="checkbox" id="sLock"> Fijar la app en pantalla al abrir (no se puede salir sin el adulto)</label>
+      <div class="rowBtns">
+        <button id="unlockBtn" class="btn">Desfijar ahora (para salir de la app)</button>
+        <button id="lockBtn" class="btn">Fijar ahora</button>
+      </div>
+      <p class="hint" id="lockHint"></p>
+      <label class="row">Nuevo PIN (4 números) <input type="password" id="sPin" inputmode="numeric" maxlength="4" pattern="[0-9]*"></label>
+      <button id="savePin" class="btn">Guardar PIN</button>
+      <p class="hint">PIN inicial: 0000. Cambialo. Para entrar acá: mantener apretada 3 segundos la esquina superior izquierda.</p>
+    </section>
+
+    <section>
+      <h3>Historial <span id="histCount"></span></h3>
+      <p class="hint">Se guarda solo en este dispositivo cada vez que toca «Hablar» o «Borrar todo».</p>
+      <div class="rowBtns">
+        <button id="exportHist" class="btn">Exportar / compartir</button>
+        <button id="clearHist" class="btn danger">Borrar historial</button>
+      </div>
+      <ol id="histList"></ol>
+    </section>
+
+    <p class="hint center">Escribe · tablero de comunicación · funciona sin internet · no recolecta datos.<br>Herramienta complementaria: no reemplaza evaluaciones ni tratamientos profesionales.</p>
+  </div>
+</div>
+
+<div id="toast" class="hidden"></div>
+<script src="app.js"></script>
+</body>
+</html>

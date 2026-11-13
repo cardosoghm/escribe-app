@@ -1,0 +1,6 @@
+{
+  "appId": "ar.escribe.tablero",
+  "appName": "Escribe",
+  "webDir": "www",
+  "android": { "allowMixedContent": false, "backgroundColor": "#30523A" }
+}
