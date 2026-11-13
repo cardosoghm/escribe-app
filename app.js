@@ -300,11 +300,21 @@
   (function () {
     const corner = $('adultCorner');
     let timer = null;
-    corner.addEventListener('pointerdown', (e) => {
+    const start = (e) => {
+      if (e.cancelable) e.preventDefault();
       e.stopPropagation();
-      timer = setTimeout(openPin, 3000);
-    });
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => corner.addEventListener(ev, () => clearTimeout(timer)));
+      clearTimeout(timer);
+      corner.classList.add('holding');
+      timer = setTimeout(() => { corner.classList.remove('holding'); openPin(); }, 3000);
+    };
+    const stop = () => { clearTimeout(timer); corner.classList.remove('holding'); };
+    // Eventos táctiles directos (más fiables en celulares que los de puntero)
+    corner.addEventListener('touchstart', start, { passive: false });
+    corner.addEventListener('touchend', stop);
+    corner.addEventListener('touchcancel', stop);
+    corner.addEventListener('mousedown', start);
+    corner.addEventListener('mouseup', stop);
+    corner.addEventListener('mouseleave', stop);
     corner.addEventListener('contextmenu', (e) => e.preventDefault());
   })();
 

@@ -1,4 +1,5 @@
-const CACHE = 'escribe-v2';
+// Primero intenta la red (para recibir actualizaciones); sin internet usa la copia guardada.
+const CACHE = 'escribe-v3';
 const FILES = ['./', './index.html', './style.css', './app.js', './words.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => {
@@ -7,5 +8,9 @@ self.addEventListener('activate', (e) => {
 });
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
-  e.respondWith(caches.match(e.request, { ignoreSearch: true }).then((r) => r || fetch(e.request)));
+  e.respondWith(
+    fetch(e.request)
+      .then((r) => { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); return r; })
+      .catch(() => caches.match(e.request, { ignoreSearch: true }))
+  );
 });
