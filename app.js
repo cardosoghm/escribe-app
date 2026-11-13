@@ -34,7 +34,7 @@
     bg: '#30523A', fg: '#F2F2F2', scale: 100, outScale: 100, upper: true, enye: false,
     debounce: 350, hold: 0, multi: true,
     speakLetter: false, speakWord: false, vibrate: true, flash: true,
-    lang: 'es-AR', rate: 1, pitch: 1, autoSpeak: 0,
+    lang: 'es-AR', rate: 1, pitch: 1, autoSpeak: 0, voice: 'auto',
     predict: true, predictN: 4, learn: true,
     lock: true, pin: '0000',
   };
@@ -169,21 +169,45 @@
   }
 
   // ---------- Voz ----------
-  let webVoices = [];
+  // Nombres de voces masculinas conocidas en español (iOS, Windows, Mac, Google, Microsoft)
+  const MALE = /(jorge|diego|juan|carlos|pablo|enrique|ra[uú]l|alvaro|álvaro|jos[eé]|miguel|tom[aá]s|andr[eé]s|gonzalo|lorenzo|federico|mateo|alonso|dario|darío|jaime|eduardo|hombre|\bmale\b|masculin)/i;
+  let webVoices = [], nativeVoices = [];
+  const esOnly = (v) => /^es/i.test(v.lang || '');
   if ('speechSynthesis' in window) {
-    const load = () => { webVoices = speechSynthesis.getVoices(); };
+    const load = () => { webVoices = speechSynthesis.getVoices().filter(esOnly); };
     load();
     speechSynthesis.onvoiceschanged = load;
+  }
+  async function loadNativeVoices() {
+    if (!TTS) return;
+    try {
+      const r = await TTS.getSupportedVoices();
+      nativeVoices = (r.voices || []).map((v, i) => Object.assign({ index: i }, v)).filter(esOnly);
+    } catch (e) { nativeVoices = []; }
+  }
+  loadNativeVoices();
+  function voiceList() { return TTS ? nativeVoices : webVoices; }
+  function pickVoice() {
+    const list = voiceList();
+    if (!list.length) return null;
+    if (S.voice !== 'auto') {
+      const v = list.find((x) => (x.voiceURI || x.name) === S.voice);
+      if (v) return v;
+    }
+    const sameLang = list.filter((x) => x.lang === S.lang || x.lang.replace('_', '-') === S.lang);
+    return sameLang.find((x) => MALE.test(x.name || x.voiceURI || '')) ||
+      list.find((x) => MALE.test(x.name || x.voiceURI || '')) || null;
   }
   async function speak(t) {
     t = (t || '').trim();
     if (!t) return;
     const say = t.toLowerCase(); // evita que deletree palabras en mayúsculas
+    const v = pickVoice();
     if (TTS) {
       try { await TTS.stop(); } catch (e) {}
-      try {
-        await TTS.speak({ text: say, lang: S.lang, rate: S.rate, pitch: S.pitch, volume: 1, category: 'playback' });
-      } catch (e) {
+      const opts = { text: say, lang: v ? v.lang : S.lang, rate: S.rate, pitch: S.pitch, volume: 1, category: 'playback' };
+      if (v) opts.voice = v.index;
+      try { await TTS.speak(opts); } catch (e) {
         try { await TTS.speak({ text: say, lang: 'es-ES', rate: S.rate, pitch: S.pitch, volume: 1 }); }
         catch (e2) { toast('No hay voz en español instalada en el dispositivo'); }
       }
@@ -192,12 +216,29 @@
     if ('speechSynthesis' in window) {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(say);
-      u.lang = S.lang; u.rate = S.rate; u.pitch = S.pitch;
-      const v = webVoices.find((x) => x.lang === S.lang) || webVoices.find((x) => /^es/i.test(x.lang));
+      u.lang = v ? v.lang : S.lang; u.rate = S.rate; u.pitch = S.pitch;
       if (v) u.voice = v;
+      else { const d = webVoices.find((x) => x.lang === S.lang) || webVoices[0]; if (d) { u.voice = d; u.lang = d.lang; } }
       speechSynthesis.speak(u);
     }
   }
+  function fillVoiceSelect() {
+    const sel = $('sVoice');
+    sel.innerHTML = '';
+    const auto = document.createElement('option');
+    auto.value = 'auto'; auto.textContent = 'Automática (preferir voz de hombre)';
+    sel.appendChild(auto);
+    voiceList().forEach((v) => {
+      const o = document.createElement('option');
+      o.value = v.voiceURI || v.name;
+      o.textContent = (v.name || v.voiceURI) + ' (' + v.lang + ')' + (MALE.test(v.name || v.voiceURI || '') ? ' – hombre' : '');
+      sel.appendChild(o);
+    });
+    sel.value = S.voice;
+    if (sel.value !== S.voice) sel.value = 'auto';
+    sel.onchange = () => { S.voice = sel.value; save(); speak('Hola, soy Romeo'); };
+  }
+
   function buzz() {
     if (S.vibrate && navigator.vibrate) { try { navigator.vibrate(25); } catch (e) {} }
   }
@@ -379,6 +420,7 @@
       .forEach((p) => { const [a, b] = p.split(':'); bindCheck('s' + a, b); });
     $('sBg').value = S.bg; $('sBg').oninput = (e) => { S.bg = e.target.value; save(); applySettings(); };
     $('sFg').value = S.fg; $('sFg').oninput = (e) => { S.fg = e.target.value; save(); applySettings(); };
+    fillVoiceSelect();
     $('sLang').value = S.lang; $('sLang').onchange = (e) => { S.lang = e.target.value; save(); };
     $('sPin').value = '';
     $('lockHint').textContent = isNative
@@ -394,7 +436,7 @@
   }
   $('closeAdult').onclick = closeAdult;
   $('resetColors').onclick = () => { S.bg = DEFAULTS.bg; S.fg = DEFAULTS.fg; $('sBg').value = S.bg; $('sFg').value = S.fg; save(); applySettings(); };
-  $('testVoice').onclick = () => speak('Hola, esta es mi voz');
+  $('testVoice').onclick = () => speak('Hola, soy Romeo');
   $('savePin').onclick = () => {
     const v = $('sPin').value;
     if (!/^\d{4}$/.test(v)) { toast('El PIN tiene que tener 4 números'); return; }
