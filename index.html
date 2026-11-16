@@ -12,14 +12,14 @@
 <body>
 <header id="top">
   <div id="adultCorner" aria-label="Acceso adulto (mantener 3 segundos)"><span>⚙</span></div>
-  <div id="output" aria-live="polite"><span id="text"></span><span id="caret"></span></div>
+  <div id="output" aria-live="polite"><span id="text"></span><span id="caret"></span><div id="said" class="hidden"></div></div>
   <nav id="controls">
     <button class="ctl" data-action="speak"><span class="ico">🔊</span><span class="lbl">Hablar</span></button>
     <button class="ctl" data-action="space"><span class="ico">␣</span><span class="lbl">Espacio</span></button>
     <button class="ctl" data-action="back"><span class="ico">⌫</span><span class="lbl">Borrar</span></button>
     <button class="ctl hold" data-action="clear"><span class="ico">✖</span><span class="lbl">Borrar todo</span><span class="bar"></span></button>
-    <button class="ctl" data-action="toggle"><span class="ico" id="toggleIco">123</span><span class="lbl" id="toggleLbl">Números</span></button>
   </nav>
+  <nav id="tabs" aria-label="Tableros"></nav>
   <div id="predict" aria-label="Palabras sugeridas"></div>
 </header>
 
@@ -39,6 +39,18 @@
 <div id="adultOverlay" class="overlay hidden">
   <div class="panel">
     <div class="panelHead"><h2>Modo adulto</h2><button id="closeAdult" class="btn primary">Volver al tablero</button></div>
+
+    <section>
+      <h3>Tableros extra (opcionales)</h3>
+      <p class="hint">Vienen ocultos «Frases» y «Emociones». Activalos solo si le sirven.</p>
+      <label class="row"><input type="checkbox" id="sTabPhrases"> Mostrar «💬 Frases»</label>
+      <label class="row"><input type="checkbox" id="sTabPain"> Mostrar «🤕 Dolor»</label>
+      <label class="row"><input type="checkbox" id="sTabFeel"> Mostrar «🙂 Emociones»</label>
+      <label>Frases rápidas (una por línea; el emoji del principio es opcional)<textarea id="sPhrases" rows="8"></textarea></label>
+      <label>Partes del cuerpo para «Dolor» (con artículo: «la cabeza», «los pies»)<textarea id="sPain" rows="6"></textarea></label>
+      <label>Emociones (la app dice «Estoy …»)<textarea id="sFeel" rows="6"></textarea></label>
+      <button id="resetBoards" class="btn">Restaurar tableros originales</button>
+    </section>
 
     <section>
       <h3>Pantalla</h3>
@@ -109,16 +121,41 @@
     </section>
 
     <section>
-      <h3>Historial <span id="histCount"></span></h3>
-      <p class="hint">Se guarda solo en este dispositivo cada vez que toca «Hablar» o «Borrar todo».</p>
+      <h3>Archivo <span id="histCount"></span></h3>
+      <p class="hint">Todo lo que escribe se guarda solo, mientras escribe (no hace falta tocar «Hablar»). También las frases, el dolor y las emociones que elige. Queda ordenado por día y se puede buscar. Se guarda solo en este dispositivo: exportalo de vez en cuando como copia de seguridad.</p>
       <div class="rowBtns">
+        <button id="openArchive" class="btn primary">📂 Abrir archivo</button>
         <button id="exportHist" class="btn">Exportar / compartir</button>
-        <button id="clearHist" class="btn danger">Borrar historial</button>
+        <button id="clearHist" class="btn danger">Borrar todo el archivo</button>
       </div>
-      <ol id="histList"></ol>
     </section>
 
     <p class="hint center">Escribe · tablero de comunicación · funciona sin internet · no recolecta datos.<br>Herramienta complementaria: no reemplaza evaluaciones ni tratamientos profesionales.<br>Diccionario: FrequencyWords (Hermit Dave), licencia CC BY-SA 4.0.</p>
+  </div>
+</div>
+
+<!-- Archivo -->
+<div id="archiveOverlay" class="overlay hidden">
+  <div class="panel archive">
+    <div class="panelHead"><h2>📂 Archivo <small id="archCount"></small></h2><button id="closeArchive" class="btn primary">Cerrar</button></div>
+    <input id="archSearch" type="search" placeholder="Buscar una palabra…">
+    <div class="rowBtns">
+      <button id="archExport" class="btn">Exportar todo</button>
+      <button id="archCopy" class="btn">Copiar todo</button>
+    </div>
+    <p class="hint">✍️ escrito · 💬 frase · 🤕 dolor · 🙂 emoción · 🔊 lo dijo en voz alta</p>
+    <div id="archList"></div>
+  </div>
+</div>
+
+<!-- Confirmación -->
+<div id="confirmOverlay" class="overlay hidden">
+  <div class="pinBox">
+    <p id="confirmMsg"></p>
+    <div class="rowBtns" style="justify-content:center">
+      <button id="confirmNo" class="btn">Cancelar</button>
+      <button id="confirmYes" class="btn danger">Sí, borrar</button>
+    </div>
   </div>
 </div>
 

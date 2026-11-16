@@ -35,7 +35,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-
 #output.upper #text{text-transform:uppercase}
 #caret{display:inline-block;width:.08em;height:1em;background:var(--fg);vertical-align:-.12em;margin-left:2px;animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
-#controls{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+#controls{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .ctl{
   position:relative;overflow:hidden;
   display:flex;align-items:center;justify-content:center;gap:8px;
@@ -47,6 +47,17 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-
 .ctl.hold .bar{position:absolute;left:0;bottom:0;height:5px;width:0;background:var(--fg);opacity:.8}
 .ctl.hold.pressing .bar{width:100%;transition:width var(--holdMs,900ms) linear}
 @media (max-width:560px){.ctl .lbl{display:none}}
+
+/* ---------- Pestañas ---------- */
+#tabs{display:grid;grid-template-columns:repeat(var(--tn,5),1fr);gap:6px}
+.tab{display:flex;align-items:center;justify-content:center;gap:6px;border-radius:10px;padding:4px;
+  min-height:40px;font-size:clamp(13px,2.2vmin,20px);border:2px solid transparent;opacity:.75}
+.tab .ico{font-size:1.25em}
+.tab.on{border-color:var(--fg);opacity:1;background:rgba(255,255,255,.12)}
+.tab.pressing{background:rgba(255,255,255,.22)}
+@media (max-width:560px){.tab .lbl{display:none}}
+#said{font-size:.55em;opacity:.85;margin-top:4px}
+#said::before{content:"🔊 "}
 
 /* ---------- Predicción ---------- */
 #predict{display:grid;grid-template-columns:repeat(var(--pn,4),1fr);gap:6px}
@@ -74,6 +85,24 @@ body.upper .pw{text-transform:uppercase}
 .key.pressing{background:rgba(255,255,255,.14)}
 .key.flash{background:rgba(255,255,255,.35)}
 body.noflash .key.pressing,body.noflash .key.flash{background:none}
+
+/* ---------- Tableros de frases / dolor / emociones ---------- */
+#board.mode-phrases,#board.mode-feel,#board.mode-pain{
+  grid-template-columns:repeat(4,1fr);grid-template-rows:none;grid-auto-rows:1fr;gap:8px;overflow-y:auto}
+#board.mode-pain{grid-template-rows:auto;grid-auto-rows:1fr}
+.card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  background:rgba(255,255,255,.10);border:2px solid rgba(255,255,255,.22);border-radius:14px;padding:6px;
+  font-size:calc(clamp(15px,3vmin,34px) * var(--scale));line-height:1.15;text-align:center;min-height:60px}
+.card .em{font-size:1.6em;line-height:1}
+body.upper .card .tx{text-transform:uppercase}
+.card.pressing{background:rgba(255,255,255,.22)}
+.card.flash{background:rgba(255,255,255,.4)}
+.card.sel{border-color:var(--fg);background:rgba(255,255,255,.25)}
+.painHead{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;min-height:60px;
+  align-items:center;text-align:center;font-size:calc(clamp(16px,3vmin,32px) * var(--scale))}
+.painHead .card{border:0;font-weight:700}
+@media (max-width:560px){#board.mode-phrases,#board.mode-feel,#board.mode-pain{grid-template-columns:repeat(3,1fr)}
+  .painHead{grid-template-columns:repeat(2,1fr)}}
 
 /* ---------- Overlays ---------- */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:20}
@@ -110,8 +139,15 @@ body.noflash .key.pressing,body.noflash .key.flash{background:none}
 .btn.primary{background:#30523A;color:#fff}
 .btn.danger{background:#f3d9d6;color:#8a1f12}
 .rowBtns{display:flex;flex-wrap:wrap;gap:8px}
-#histList{margin:8px 0 0 22px;font-size:15px;max-height:300px;overflow-y:auto}
-#histList li{margin:6px 0}
-#histList small{color:#6b786f}
+.panel textarea{width:100%;font-size:15px;padding:8px;border:1px solid #aab3ac;border-radius:8px;margin-top:6px;font-family:inherit}
+.panel input[type=search]{width:100%;font-size:17px;padding:10px 12px;border:1px solid #aab3ac;border-radius:10px;margin:4px 0 8px}
+.panel h2 small{font-size:14px;color:#6b786f;font-weight:400}
+.btn.small{padding:6px 10px;font-size:14px;margin:0}
+.day{margin-top:14px}
+.dayHead{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid #d6dbd7;padding-bottom:4px}
+.dayHead h3{border:0;margin:0;padding:0;font-size:16px}
+.entry{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed #e1e5e2}
+.entry .meta{font-size:13px;color:#6b786f;white-space:nowrap}
+.entry .etx{font-size:17px;font-weight:700;word-break:break-word}
 
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:10px;font-weight:400;z-index:30;max-width:90vw;text-align:center}
